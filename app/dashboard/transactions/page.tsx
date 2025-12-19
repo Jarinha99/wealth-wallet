@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import TransactionsContent from './transactions-content';
-import type { Transaction, Profile } from '@/types/database';
+import type { Transaction, Profile, SupabaseError } from '@/types/database';
 
 export const metadata = {
   title: 'Transactions - WealthWallet',
@@ -79,7 +79,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         currency: currencyParam,
       }}
       errors={{
-        transactions: transactionsError?.message,
+        transactions: transactionsError ? (transactionsError as SupabaseError).message : undefined,
       }}
     />
   );

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ProfileContent from './profile-content';
+import type { Profile, SupabaseError } from '@/types/database';
 
 export const metadata = {
   title: 'Profile - WealthWallet',
@@ -22,19 +23,13 @@ export default async function ProfilePage() {
     .select('*')
     .eq('user_id', user.id)
     .single()
-    .returns<{
-      id: string;
-      user_id: string;
-      username: string | null;
-      full_name: string | null;
-      created_at: string;
-      updated_at: string;
-    }>();
+    .returns<Profile>();
 
   // If profile doesn't exist, create one
   if (!profile && !profileError) {
     const { data: newProfile } = await supabase
       .from('profiles')
+      // @ts-ignore - Supabase type inference issue with profiles table
       .insert({
         user_id: user.id,
         username: null,
@@ -42,20 +37,13 @@ export default async function ProfilePage() {
       })
       .select()
       .single()
-      .returns<{
-        id: string;
-        user_id: string;
-        username: string | null;
-        full_name: string | null;
-        created_at: string;
-        updated_at: string;
-      }>();
+      .returns<Profile>();
 
     return (
       <ProfileContent
         user={user}
         profile={newProfile || null}
-        error={profileError?.message}
+        error={profileError ? (profileError as SupabaseError).message : undefined}
       />
     );
   }
@@ -64,7 +52,7 @@ export default async function ProfilePage() {
     <ProfileContent
       user={user}
       profile={profile || null}
-      error={profileError?.message}
+      error={profileError ? (profileError as SupabaseError).message : undefined}
     />
   );
 }

@@ -6,15 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
-
-interface Profile {
-  id: string;
-  user_id: string;
-  username: string | null;
-  full_name: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { Profile } from '@/types/database';
 
 interface ProfileFormProps {
   user: User;
@@ -85,12 +77,14 @@ export default function ProfileForm({ user, profile, onUpdate }: ProfileFormProp
       if (!profile) {
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
+          // @ts-ignore - Supabase type inference issue with profiles table
           .insert({
             user_id: user.id,
             ...updateData,
           })
           .select()
-          .single();
+          .single()
+          .returns<Profile>();
 
         if (insertError) {
           setError(insertError.message);
@@ -99,7 +93,8 @@ export default function ProfileForm({ user, profile, onUpdate }: ProfileFormProp
         }
 
         if (newProfile) {
-          onUpdate(newProfile);
+          const profile = newProfile as Profile;
+          onUpdate(profile);
           setSuccess(true);
           setIsLoading(false);
           setTimeout(() => setSuccess(false), 3000);
@@ -110,10 +105,12 @@ export default function ProfileForm({ user, profile, onUpdate }: ProfileFormProp
       // Update existing profile
       const { data: updatedProfile, error: updateError } = await supabase
         .from('profiles')
+        // @ts-ignore - Supabase type inference issue with profiles table
         .update(updateData)
         .eq('user_id', user.id)
         .select()
-        .single();
+        .single()
+        .returns<Profile>();
 
       if (updateError) {
         setError(updateError.message);
@@ -122,12 +119,13 @@ export default function ProfileForm({ user, profile, onUpdate }: ProfileFormProp
       }
 
       if (updatedProfile) {
-        onUpdate(updatedProfile);
+        const profile = updatedProfile as Profile;
+        onUpdate(profile);
         setSuccess(true);
         setIsLoading(false);
         reset({
-          username: updatedProfile.username || '',
-          full_name: updatedProfile.full_name || '',
+          username: profile.username || '',
+          full_name: profile.full_name || '',
         });
         setTimeout(() => setSuccess(false), 3000);
       }

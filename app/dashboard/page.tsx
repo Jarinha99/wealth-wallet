@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import DashboardContent from './dashboard-content';
-import type { Transaction, Budget, Profile } from '@/types/database';
+import type { Transaction, Budget, Profile, SupabaseError } from '@/types/database';
 
 export const metadata = {
   title: 'Dashboard - WealthWallet',
@@ -90,8 +90,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         netSavings,
       }}
       errors={{
-        transactions: transactionsError?.message,
-        budgets: budgetsError?.message,
+        transactions: transactionsError ? (transactionsError as SupabaseError).message : undefined,
+        budgets: budgetsError ? (budgetsError as SupabaseError).message : undefined,
       }}
       selectedMonth={validMonth}
       selectedYear={validYear}
